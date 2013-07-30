@@ -18,12 +18,14 @@
 -define(SUM, 16#C6EF3720).
 -define(DELTA, 16#61C88647).
 
+-on_load(init/0).
+
 init() ->
     erlang:load_nif("./xtea", 0).
 c_encrypt(_Key, _Bin) ->
-    "NIF not loaded".
+    throw({error, nif_not_loaded}).
 c_decrypt(_Key, _Bin) ->
-    "NIF not loaded".
+    throw({error, nif_not_loaded}).
 
 c_test() ->
     Text = <<"This is a test decrypt/encrypt!!">>,
@@ -46,8 +48,15 @@ c_test(Key, Text) ->
     Decrypted = c_decrypt(Key,Encrypted),
     io:format("Decrypted: ~p\n", [Decrypted]).
 
-decrypt(Key, Msg) ->
-    c_decrypt(Key, Msg).
+decrypt(Key, Msg) when is_list(Msg) ->
+    decrypt(Key, list_to_binary(Msg));
+decrypt(Key, Msg) when is_binary(Msg) ->
+    try c_decrypt(Key, Msg)
+    catch 
+	{error, Reason} ->
+	    io:format("*ERROR* ~p ~p ~p\n", [?MODULE, ?LINE, Reason]),
+	    erl_decrypt(Key, Msg)
+    end.
 
 erl_decrypt(Key, Msg) ->
     erl_decrypt(Key, Msg, []).
@@ -73,8 +82,15 @@ do_decrypt(Key,Sum, V0, V1, Rounds) when Rounds < 32 ->
     do_decrypt(Key, Sum2, V01, V11, Rounds +1).
 
 
-encrypt(Key, Msg) ->
-    c_encrypt(Key, Msg).
+encrypt(Key, Msg) when is_list(Msg) ->
+    encrypt(Key, list_to_binary(Msg));
+encrypt(Key, Msg) when is_binary(Msg) ->
+    try c_encrypt(Key, Msg)
+    catch
+	{error, Reason} ->
+	    io:format("*ERROR* ~p ~p ~p\n", [?MODULE, ?LINE, Reason]),
+	    erl_encrypt(Key, Msg)
+    end.
 
 erl_encrypt(Key, Msg) ->
     erl_encrypt(Key, fill_padding_bytes(Msg), []).
