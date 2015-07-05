@@ -1,9 +1,9 @@
 ///-------------------------------------------------------------------
-/// File    : xtea.c
-/// Author  : Olle Mattsson <olle@oddish>
+/// File    : xtea_nif.c
+/// Author  : Olle Mattsson <olle@rymdis.com>
 /// Description : nif for XTEA cryptography
 ///
-/// Created : 29 Mars 2013 by Olle Mattsson <olle@oddish>
+/// Created : 29 Mars 2013 by Olle Mattsson <olle@rymdis.com>
 ///-------------------------------------------------------------------
 #include "erl_nif.h"
 #include <stdint.h>
@@ -11,12 +11,13 @@
 
 
 #define DELTA 0x61C88647
-void encrypt(uint32_t* buffer, int key[], int size);
-void decrypt(uint32_t* buffer, int key[], int size);
+void encrypt(uint32_t* buffer, uint32_t key[], int size);
+void decrypt(uint32_t* buffer, uint32_t key[], int size);
 
 static ERL_NIF_TERM xtea_encrypt(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-  uint32_t k1, k2, k3, k4, arity;
+  uint32_t k1, k2, k3, k4;
+  int arity;
   const ERL_NIF_TERM *tuple;
   if (!enif_get_tuple(env, argv[0], &arity, &tuple))
     return enif_make_badarg(env);
@@ -58,7 +59,8 @@ static ERL_NIF_TERM xtea_encrypt(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
 
 static ERL_NIF_TERM xtea_decrypt(ErlNifEnv* env, int argc, const ERL_NIF_TERM argv[])
 {
-  uint32_t k1, k2, k3, k4, arity;
+  uint32_t k1, k2, k3, k4;
+  int arity;
   const ERL_NIF_TERM *tuple;
   if (!enif_get_tuple(env, argv[0], &arity, &tuple)) {
     return enif_make_badarg(env);
@@ -99,7 +101,7 @@ ERL_NIF_INIT(xtea,nif_funcs,NULL,NULL,NULL,NULL)
 
 
 
-void encrypt(uint32_t* buffer, int key[], int size)
+void encrypt(uint32_t* buffer, uint32_t key[], int size)
 {
   int read_pos = 0;
   while(read_pos < size/4) {
@@ -119,7 +121,7 @@ void encrypt(uint32_t* buffer, int key[], int size)
 }
 
 
-void decrypt(uint32_t* buffer, int key[], int size)
+void decrypt(uint32_t* buffer, uint32_t key[], int size)
 {
   int read_pos = 0;
   while(read_pos < size/4) {

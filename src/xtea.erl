@@ -10,8 +10,6 @@
 -export([encrypt/2,decrypt/2]).
 -export([erl_encrypt/2,erl_decrypt/2]).
 -export([init/0, generate_key/0]).
--export([erl_test/0,erl_test/1,erl_test/2]).
--export([c_test/0,c_test/1,c_test/2]).
 
 -include("xtea.hrl").
 
@@ -20,33 +18,19 @@
 
 -on_load(init/0).
 
+
+generate_key() ->
+    #key{k1 = random:uniform(4294967295),
+	 k2 = random:uniform(4294967295),
+	 k3 = random:uniform(4294967295),
+	 k4 = random:uniform(4294967295)}.
+
 init() ->
-    erlang:load_nif("./xtea", 0).
+    erlang:load_nif(filename:join(code:priv_dir(xtea), "xtea"), 0).
 c_encrypt(_Key, _Bin) ->
     throw({error, nif_not_loaded}).
 c_decrypt(_Key, _Bin) ->
     throw({error, nif_not_loaded}).
-
-c_test() ->
-    Text = <<"This is a test decrypt/encrypt!!">>,
-    Key = #key{k1 = 3404669412, k2 = 1292174806,
-	       k3 = 1431840963, k4 = 1813482075},
-    c_test(Key, Text).
-c_test(Text) when is_list(Text) ->
-    Key = #key{k1 = 3404669412, k2 = 1292174806,
-	       k3 = 1431840963, k4 = 1813482075},
-    c_test(Key, list_to_binary(Text));
-c_test(Text) when is_binary(Text) ->
-    Key = #key{k1 = 3404669412, k2 = 1292174806,
-	       k3 = 1431840963, k4 = 1813482075},
-    c_test(Key, Text).
-
-c_test(Key, Text) ->
-    io:format("Text: ~p\nKey: ~p\n", [Text,Key]),
-    Encrypted = c_encrypt(Key,Text),
-    io:format("Encrypted: ~p\n", [Encrypted]),
-    Decrypted = c_decrypt(Key,Encrypted),
-    io:format("Decrypted: ~p\n", [Decrypted]).
 
 decrypt(Key, Msg) when is_list(Msg) ->
     decrypt(Key, list_to_binary(Msg));
@@ -116,31 +100,6 @@ do_encrypt(Key,Sum, V0,V1, Rounds) when Rounds < 32 ->
     do_encrypt(Key, Sum2, V01, V11, Rounds +1).
 
     
-%% This is a function to test the encrypt/decrypt functionality
-erl_test() ->
-    Text = <<"This is a test decrypt/encrypt!!">>,
-    Key = #key{k1 = 3404669412, k2 = 1292174806,
-	       k3 = 1431840963, k4 = 1813482075},
-    erl_test(Key, Text).
-erl_test(Text) when is_list(Text) ->
-    Key = #key{k1 = 3404669412, k2 = 1292174806,
-	       k3 = 1431840963, k4 = 1813482075},
-    erl_test(Key, list_to_binary(Text));
-erl_test(Text) when is_binary(Text) ->
-    Key = #key{k1 = 3404669412, k2 = 1292174806,
-	       k3 = 1431840963, k4 = 1813482075},
-    erl_test(Key, Text).
-
-erl_test(Key, Text) when is_binary(Text),
-			 is_tuple(Key),
-			 size(Key) == 5 ->
-    io:format("Text: ~p\nKey: ~p\n", [Text,Key]),
-    Encrypted = erl_encrypt(Key,Text),
-    io:format("Encrypted: ~p\n", [Encrypted]),
-    Decrypted = erl_decrypt(Key,Encrypted),
-    io:format("Decrypted: ~p\n", [Decrypted]).
-
-
 %%%%%%%%%%%%%%%%%%%%%
 %% LOCAL FUNCTIONS
 %%%%%%%%%%%%%%%%%%%%%
@@ -169,10 +128,3 @@ make_binary([], Acc) ->
 make_binary([{V0,V1}|T], Acc) ->
     make_binary(T, <<V0:32/?UINT,V1:32/?UINT,Acc/binary>>).
 
-
-generate_key() ->
-    #key{k1 = random:uniform(4294967295),
-	 k2 = random:uniform(4294967295),
-	 k3 = random:uniform(4294967295),
-	 k4 = random:uniform(4294967295)}.
-    

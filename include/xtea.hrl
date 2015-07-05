@@ -9,6 +9,9 @@
 
 -define(UINT, unsigned-integer-little).
 
--record(key, {k1,k2,k3,k4}).
+-record(key, {k1 :: integer(),
+              k2 :: integer(),
+              k3 :: integer(),
+              k4 :: integer()}).
 
 
