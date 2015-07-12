@@ -9,7 +9,6 @@
 #include <stdint.h>
 #include <string.h>
 
-
 #define DELTA 0x61C88647
 void encrypt(uint32_t* buffer, uint32_t key[], int size);
 void decrypt(uint32_t* buffer, uint32_t key[], int size);
@@ -37,23 +36,23 @@ static ERL_NIF_TERM xtea_encrypt(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
   if (!enif_inspect_binary(env, argv[1], &in)) 
     return enif_make_badarg(env);
 
+  int size = in.size;
   uint32_t padding;
   if((in.size % 8) != 0){
     padding = 8 - (in.size % 8);
+    size += padding;
   }
 
-  if(!enif_alloc_binary(in.size + padding, &out)) {
+  if(!enif_alloc_binary(size, &out)) {
     return enif_make_badarg(env);
   }
 
-
-  memset((void*)out.data, 0x33, in.size+padding);
+  memset(out.data, 0x33, size);
   memcpy(out.data, in.data, in.size);
   uint32_t key[4];
   key[0] = k1; key[1] = k2; key[2] = k3; key[3] = k4;
   
-  encrypt((uint32_t*)out.data, key, out.size);
-
+  encrypt((uint32_t*)out.data, key, size);
   return enif_make_binary(env, &out);
 }
 

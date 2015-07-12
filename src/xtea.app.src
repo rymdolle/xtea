@@ -1,12 +1,13 @@
 {application, xtea,
  [
   {description, "XTEA encryption written in erlang with NIFs"},
-  {vsn, "0.1"},
+  {vsn, "%VSN%"},
   {registered, []},
   {applications, [kernel,
                   stdlib
                  ]},
-  {modules, []},
+  {modules, [xtea,
+             xtea_test]},
   {mod, {xtea, []}}
 
  ]}.

@@ -10,19 +10,25 @@
 
 -include("xtea.hrl").
 
--export([start/0, start/2]).
+-export([start/0, start/2, start/3]).
 -export([c_test_async/2, c_test_sync/3,
          erl_test_async/2, erl_test_sync/3,
+         generate_message/1,
 	 c_test_while/5, erl_test_while/5]).
 
 start() ->
     start(500, 100).
 
 start(Num, Bytes) ->
-    xtea:init(),
+    start(Num, Bytes, 5).
+
+start(Num, Bytes, Seconds) ->
+    io:format("Init xtea ~p\n",  [catch xtea:init()]),
+
     io:format("Starting test.\nGenerating key and message.\n", []),
     Key = xtea:generate_key(),
     Msg = generate_message(Bytes),
+    io:format("Key: ~p\nMsg size: ~p.\n", [Key, byte_size(Msg)]),
 
     CSync = Num,
     ErlSync = Num,
@@ -42,7 +48,7 @@ start(Num, Bytes) ->
     {ErlTime2,ok}= timer:tc(fun() -> erl_test_async(ErlAsync, Key, Msg) end),
     io:format("~p seconds\n", [ErlTime2/1000000]),
 
-    Time = 10* 1000,
+    Time = Seconds* 1000,
     io:format("Testing C encrypt/decrypt for ~p seconds\t", [Time div 1000]),
     CTests = c_test_while(Key, Msg, Time),
     io:format("~p tests\n", [CTests]),
@@ -68,7 +74,6 @@ rand() ->
 
 c_test_sync(Num, Key, Msg) when Num > 0 ->
     Encrypted = xtea:c_encrypt(Key, Msg),
-    io:format("~p\n", [Msg]),
     Decrypted = xtea:c_decrypt(Key, Encrypted),
     if Decrypted =/= Msg ->
 	    io:format("Msg: ~p\nEncrypted: ~p\nDecrypted: ~p\n", [Msg, Encrypted, Decrypted]),
@@ -153,7 +158,8 @@ erl_test_async(Key, Msg) ->
 
 
 c_test_while(Key, Msg, Time) ->
-    Pid = spawn_link(fun() -> c_test_while(false, 0, Key, Msg, self()) end),
+    Self = self(),
+    Pid = spawn_link(fun() -> c_test_while(false, 0, Key, Msg, Self) end),
     timer:send_after(Time, Pid, done),
     receive
 	{tests, Tests} ->
@@ -180,7 +186,8 @@ c_test_while(true, Tests, _,_, Pid) ->
 
 
 erl_test_while(Key, Msg, Time) ->
-    Pid = spawn_link(fun() -> erl_test_while(false, 0, Key, Msg, self()) end),
+    Self = self(),
+    Pid = spawn_link(fun() -> erl_test_while(false, 0, Key, Msg, Self) end),
     timer:send_after(Time, Pid, done),
     receive
 	{tests, Tests} ->
