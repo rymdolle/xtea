@@ -8,7 +8,9 @@
 -module(xtea).
 
 -export([encrypt/2,decrypt/2]).
+-export([c_encrypt/2,c_decrypt/2]).
 -export([erl_encrypt/2,erl_decrypt/2]).
+-export([fill_padding_bytes/1]).
 -export([init/0, generate_key/0]).
 
 -include("xtea.hrl").
@@ -16,8 +18,10 @@
 -define(SUM, 16#C6EF3720).
 -define(DELTA, 16#61C88647).
 
--on_load(init/0).
+%-on_load(init/0).
 
+
+-compile({inline,[fit/1]}).
 
 generate_key() ->
     #key{k1 = random:uniform(4294967295),
@@ -27,6 +31,7 @@ generate_key() ->
 
 init() ->
     erlang:load_nif(filename:join(code:priv_dir(xtea), "xtea"), 0).
+
 c_encrypt(_Key, _Bin) ->
     throw({error, nif_not_loaded}).
 c_decrypt(_Key, _Bin) ->
@@ -50,25 +55,23 @@ erl_decrypt(Key, Msg) ->
 erl_decrypt(Key, <<V0:32/?UINT,V1:32/?UINT,B/binary>>, Acc) ->
     Res = do_decrypt(Key,?SUM, V0,V1, 0),
     erl_decrypt(Key, B, [Res|Acc]);
-erl_decrypt(_Key, Msg, Acc) when size(Msg) < 8 ->
+erl_decrypt(_Key, Msg, Acc) when byte_size(Msg) < 8 ->
     make_binary(Acc).
 
 
 %% Iterate 32 times and then return the result
-do_decrypt(_Key,_, V0, V1, 32) ->
-    {V0,V1};
 do_decrypt(Key,Sum, V0, V1, Rounds) when Rounds < 32 ->
     V11 = fit(V1 - (fit(fit(fit(fit(V0 bsl 4) bxor fit(V0 bsr 5)) + V0) bxor fit(Sum + element(fit(fit(Sum bsr 11) band 3)+#key.k1, Key))))),
     %% This can be changed to subtract instead of add
     %% but in my case it had to be addition
     Sum2 = fit(Sum + ?DELTA),
     V01 = fit(V0 - (fit(fit(fit(fit(V11 bsl 4) bxor fit(V11 bsr 5)) + V11) bxor fit(Sum2 + element(fit(Sum2 band 3)+#key.k1, Key))))),
-    do_decrypt(Key, Sum2, V01, V11, Rounds +1).
+    do_decrypt(Key, Sum2, V01, V11, Rounds +1);
+do_decrypt(_Key,_, V0, V1, 32) ->
+    {V0,V1}.
 
 
-encrypt(Key, Msg) when is_list(Msg) ->
-    encrypt(Key, list_to_binary(Msg));
-encrypt(Key, Msg) when is_binary(Msg) ->
+encrypt(Key, Msg) ->
     try c_encrypt(Key, Msg)
     catch
 	{error, Reason} ->
@@ -76,8 +79,10 @@ encrypt(Key, Msg) when is_binary(Msg) ->
 	    erl_encrypt(Key, Msg)
     end.
 
-erl_encrypt(Key, Msg) ->
-    erl_encrypt(Key, fill_padding_bytes(Msg), []).
+erl_encrypt(Key, Msg) when is_binary(Msg) ->
+    erl_encrypt(Key, fill_padding_bytes(Msg), []);
+erl_encrypt(Key, Msg) when is_list(Msg) ->
+    erl_encrypt(Key, list_to_binary(Msg)).
 
 %% Take 2*4 bytes and send them to the encrypt function and
 %% put the result in an accumulator
@@ -89,15 +94,15 @@ erl_encrypt(_Key, <<>>, Acc) ->
     make_binary(Acc).
 
 %% Iterate 32 times and then return the result
-do_encrypt(_Key, _, V0,V1, 32) ->
-    {V0, V1};
 do_encrypt(Key,Sum, V0,V1, Rounds) when Rounds < 32 ->
     V01 = fit(V0 + (fit(fit(fit(fit(V1 bsl 4) bxor fit(V1 bsr 5)) + V1) bxor fit(Sum + element(fit(Sum band 3)+#key.k1, Key))))),
     %% This can be changed to add instead of subtract
     %% but in my case it had to be subtraction
     Sum2 = fit(Sum - ?DELTA),
     V11 = fit(V1 + (fit(fit(fit(fit(V01 bsl 4) bxor fit(V01 bsr 5)) + V01) bxor fit(Sum2 + element(fit(fit(Sum2 bsr 11) band 3)+#key.k1, Key))))),
-    do_encrypt(Key, Sum2, V01, V11, Rounds +1).
+    do_encrypt(Key, Sum2, V01, V11, Rounds +1);
+do_encrypt(_Key, _, V0,V1, 32) ->
+    {V0, V1}.
 
     
 %%%%%%%%%%%%%%%%%%%%%
@@ -111,8 +116,8 @@ fit(Int) ->
     Int2.
 
 %% Fill up with padding bytes to be able to encrypt the message properly
-fill_padding_bytes(Msg) when size(Msg) rem 8 =/= 0 ->
-    NumBytesToAdd = 8 - (size(Msg) rem 8),
+fill_padding_bytes(Msg) when byte_size(Msg) rem 8 =/= 0 ->
+    NumBytesToAdd = 8 - (byte_size(Msg) rem 8),
     PaddingBytes = list_to_binary(lists:duplicate(NumBytesToAdd, 16#33)),
     <<Msg/binary,PaddingBytes/binary>>;
 fill_padding_bytes(Msg) ->

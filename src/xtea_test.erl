@@ -10,9 +10,13 @@
 
 -include("xtea.hrl").
 
--export([start/2]).
--export([c_test_async/2, erl_test_async/2,
+-export([start/0, start/2]).
+-export([c_test_async/2, c_test_sync/3,
+         erl_test_async/2, erl_test_sync/3,
 	 c_test_while/5, erl_test_while/5]).
+
+start() ->
+    start(500, 100).
 
 start(Num, Bytes) ->
     xtea:init(),
@@ -46,8 +50,6 @@ start(Num, Bytes) ->
     ErlTests = erl_test_while(Key, Msg, Time),
     io:format("~p tests\n", [ErlTests]),
 
-
-
     io:format("Test complete.\n", []).
 
 
@@ -57,20 +59,17 @@ generate_message(N) ->
 generate_message(N, Acc) when N > 0 ->
     generate_message(N-1, <<(rand())/integer,Acc/binary>>);
 generate_message(0,Acc) ->
-    Acc.
+    xtea:fill_padding_bytes(Acc).
 
     
 rand() ->
     random:uniform(10) -1.
 
-remove_pad(Size, Bin) when is_binary(Bin) ->
-    <<B:Size/binary,_/binary>> = Bin,
-    B.
-
 
 c_test_sync(Num, Key, Msg) when Num > 0 ->
-    Encrypted = xtea:encrypt(Key, Msg),
-    Decrypted = remove_pad(size(Msg), xtea:decrypt(Key, Encrypted)),
+    Encrypted = xtea:c_encrypt(Key, Msg),
+    io:format("~p\n", [Msg]),
+    Decrypted = xtea:c_decrypt(Key, Encrypted),
     if Decrypted =/= Msg ->
 	    io:format("Msg: ~p\nEncrypted: ~p\nDecrypted: ~p\n", [Msg, Encrypted, Decrypted]),
 	    throw(do_not_match_c);
@@ -83,7 +82,7 @@ c_test_sync(0,_, _) ->
 
 erl_test_sync(Num, Key, Msg) when Num > 0 ->
     Encrypted = xtea:erl_encrypt(Key, Msg),
-    Decrypted = remove_pad(size(Msg), xtea:erl_decrypt(Key, Encrypted)),
+    Decrypted = xtea:erl_decrypt(Key, Encrypted),
     if Decrypted =/= Msg ->
 	    throw(do_not_match_erl);
        true -> ok
@@ -96,7 +95,7 @@ c_test_async(Num, Key, Msg) ->
     c_test_async(Num, Key, Msg, []).
 
 c_test_async(Num, Key, Msg, Pids) when Num > 0 ->
-    Pid = spawn_link(?MODULE, c_test_async, [Key, Msg]),
+    Pid = spawn_link(fun() -> c_test_async(Key, Msg) end),
     c_test_async(Num-1, Key, Msg, [Pid|Pids]);
 c_test_async(0,_, _, Pids) ->
     lists:foreach(fun(Pid) -> Pid ! {self(), start} end, Pids),
@@ -108,7 +107,7 @@ erl_test_async(Num, Key, Msg) ->
     erl_test_async(Num, Key, Msg, []).
 
 erl_test_async(Num, Key, Msg, Pids) when Num > 0 ->
-    Pid = spawn_link(?MODULE, erl_test_async, [Key, Msg]),
+    Pid = spawn_link(fun() -> erl_test_async(Key, Msg) end),
     erl_test_async(Num-1, Key, Msg, [Pid|Pids]);
 erl_test_async(0, _,_, Pids) ->
     lists:foreach(fun(Pid) -> Pid ! {self(), start} end, Pids),
@@ -129,7 +128,7 @@ c_test_async(Key, Msg) ->
     receive 
 	{From, start} ->
 	    Encrypted = xtea:encrypt(Key, Msg),
-	    Decrypted = remove_pad(size(Msg), xtea:decrypt(Key, Encrypted)),
+	    Decrypted = xtea:decrypt(Key, Encrypted),
 	    if Decrypted =/= Msg ->
 		    io:format("Msg: ~p\nEncrypted: ~p\nDecrypted: ~p\n", [Msg, Encrypted, Decrypted]),
 		    throw(do_not_match_c);
@@ -143,7 +142,7 @@ erl_test_async(Key, Msg) ->
     receive 
 	{From, start} ->
 	    Encrypted = xtea:erl_encrypt(Key, Msg),
-	    Decrypted = remove_pad(size(Msg), xtea:erl_decrypt(Key, Encrypted)),
+	    Decrypted = xtea:erl_decrypt(Key, Encrypted),
 	    if Decrypted =/= Msg ->
 		    throw(do_not_match_erl);
 	       true -> From ! done
@@ -154,7 +153,7 @@ erl_test_async(Key, Msg) ->
 
 
 c_test_while(Key, Msg, Time) ->
-    Pid = spawn_link(?MODULE, c_test_while, [false, 0, Key, Msg, self()]),
+    Pid = spawn_link(fun() -> c_test_while(false, 0, Key, Msg, self()) end),
     timer:send_after(Time, Pid, done),
     receive
 	{tests, Tests} ->
@@ -167,7 +166,7 @@ c_test_while(false, Tests, Key, Msg, Pid) ->
 	    c_test_while(true, Tests, Key, Msg, Pid)
     after 0 ->
 	    Encrypted = xtea:encrypt(Key, Msg),
-	    Decrypted = remove_pad(size(Msg), xtea:decrypt(Key, Encrypted)),
+	    Decrypted = xtea:decrypt(Key, Encrypted),
 	    if Decrypted =/= Msg ->
 		    io:format("Msg: ~p\nEncrypted: ~p\nDecrypted: ~p\n", [Msg, Encrypted, Decrypted]),
 		    throw(do_not_match_c);
@@ -181,7 +180,7 @@ c_test_while(true, Tests, _,_, Pid) ->
 
 
 erl_test_while(Key, Msg, Time) ->
-    Pid = spawn_link(?MODULE, erl_test_while, [false, 0, Key, Msg, self()]),
+    Pid = spawn_link(fun() -> erl_test_while(false, 0, Key, Msg, self()) end),
     timer:send_after(Time, Pid, done),
     receive
 	{tests, Tests} ->
@@ -194,7 +193,7 @@ erl_test_while(false, Tests, Key, Msg, Pid) ->
 	    erl_test_while(true, Tests, Key, Msg, Pid)
     after 0 ->
 	    Encrypted = xtea:erl_encrypt(Key, Msg),
-	    Decrypted = remove_pad(size(Msg), xtea:erl_decrypt(Key, Encrypted)),
+	    Decrypted = xtea:erl_decrypt(Key, Encrypted),
 	    if Decrypted =/= Msg ->
 		    throw(do_not_match_erl);
 	       true -> ok
