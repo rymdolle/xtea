@@ -18,8 +18,7 @@
 -define(SUM, 16#C6EF3720).
 -define(DELTA, 16#61C88647).
 
-%-on_load(init/0).
-
+-on_load(init/0).
 
 -compile({inline,[fit/1]}).
 
