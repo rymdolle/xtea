@@ -1,9 +1,15 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Copyright (c) 2009-2015 Olle Mattsson
+%%%
+%%% See the file "LICENSE" for information on usage and redistribution
+%%% of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+%%%
 %%%-------------------------------------------------------------------
 %%% File    : xtea.erl
-%%% Author  : Olle Mattsson <olle@zubat>
+%%% Author  : Olle Mattsson <olle@rymdis.com>
 %%% Description : XTEA cryptography in erlang and using nif
 %%%
-%%% Created : 22 May 2009 by Olle Mattsson <olle@zubat>
+%%% Created : 22 May 2009 by Olle Mattsson <olle@rymdis.com>
 %%%-------------------------------------------------------------------
 -module(xtea).
 

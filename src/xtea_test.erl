@@ -1,10 +1,15 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% Copyright (c) 2013-2015 Olle Mattsson
+%%%
+%%% See the file "LICENSE" for information on usage and redistribution
+%%% of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+%%%
 %%%-------------------------------------------------------------------
-%%% @author  <olle@oddish>
-%%% @copyright (C) 2013, 
+%%% @author  Olle Mattsson <olle@rymdis.com>
 %%% @doc
 %%%
 %%% @end
-%%% Created :  6 Apr 2013 by  <olle@oddish>
+%%% Created :  6 Apr 2013 by  <olle@rymdis.com>
 %%%-------------------------------------------------------------------
 -module(xtea_test).
 

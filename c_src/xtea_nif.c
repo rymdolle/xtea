@@ -1,3 +1,9 @@
+//////////////////////////////////////////////////////////////////////
+/// Copyright (c) 2013-2015 Olle Mattsson
+///
+/// See the file "LICENSE" for information on usage and redistribution
+/// of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+///
 ///-------------------------------------------------------------------
 /// File    : xtea_nif.c
 /// Author  : Olle Mattsson <olle@rymdis.com>
