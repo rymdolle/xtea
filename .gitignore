@@ -3,3 +3,5 @@
 *.so
 *.app
 *~
+c_src/xtea_nif.d
+.rebar
