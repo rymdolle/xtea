@@ -29,10 +29,10 @@
 -compile({inline,[fit/1]}).
 
 generate_key() ->
-    #key{k1 = random:uniform(4294967295),
-	 k2 = random:uniform(4294967295),
-	 k3 = random:uniform(4294967295),
-	 k4 = random:uniform(4294967295)}.
+    #key{k1 = rand:uniform(4294967295),
+         k2 = rand:uniform(4294967295),
+         k3 = rand:uniform(4294967295),
+         k4 = rand:uniform(4294967295)}.
 
 init() ->
     erlang:load_nif(filename:join(code:priv_dir(xtea), "xtea"), 0).
@@ -46,10 +46,10 @@ decrypt(Key, Msg) when is_list(Msg) ->
     decrypt(Key, list_to_binary(Msg));
 decrypt(Key, Msg) when is_binary(Msg) ->
     try c_decrypt(Key, Msg)
-    catch 
-	{error, Reason} ->
-	    io:format("*ERROR* ~p ~p ~p\n", [?MODULE, ?LINE, Reason]),
-	    erl_decrypt(Key, Msg)
+    catch
+        {error, Reason} ->
+            io:format("*ERROR* ~p ~p ~p\n", [?MODULE, ?LINE, Reason]),
+            erl_decrypt(Key, Msg)
     end.
 
 erl_decrypt(Key, Msg) ->
@@ -79,9 +79,9 @@ do_decrypt(_Key,_, V0, V1, 32) ->
 encrypt(Key, Msg) ->
     try c_encrypt(Key, Msg)
     catch
-	{error, Reason} ->
-	    io:format("*ERROR* ~p ~p ~p\n", [?MODULE, ?LINE, Reason]),
-	    erl_encrypt(Key, Msg)
+        {error, Reason} ->
+            io:format("*ERROR* ~p ~p ~p\n", [?MODULE, ?LINE, Reason]),
+            erl_encrypt(Key, Msg)
     end.
 
 erl_encrypt(Key, Msg) when is_binary(Msg) ->
@@ -109,7 +109,7 @@ do_encrypt(Key,Sum, V0,V1, Rounds) when Rounds < 32 ->
 do_encrypt(_Key, _, V0,V1, 32) ->
     {V0, V1}.
 
-    
+
 %%%%%%%%%%%%%%%%%%%%%
 %% LOCAL FUNCTIONS
 %%%%%%%%%%%%%%%%%%%%%
@@ -117,7 +117,7 @@ do_encrypt(_Key, _, V0,V1, 32) ->
 %% This function is needed due to Erlang's handeling of bignums
 fit(Int) ->
     <<Int2:32/?UINT>> =
-	<<Int:32/?UINT>>,
+        <<Int:32/?UINT>>,
     Int2.
 
 %% Fill up with padding bytes to be able to encrypt the message properly
@@ -137,4 +137,3 @@ make_binary([], Acc) ->
     Acc;
 make_binary([{V0,V1}|T], Acc) ->
     make_binary(T, <<V0:32/?UINT,V1:32/?UINT,Acc/binary>>).
-
