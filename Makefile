@@ -1,8 +1,5 @@
 all:
-	rebar compile
+	rebar3 compile
 
 clean:
-	rebar clean
-
-test:
-	erl -noshell -eval 'xtea_test:start(), halt()'
+	rebar3 clean

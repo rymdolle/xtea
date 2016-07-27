@@ -4,4 +4,5 @@
 *.app
 *~
 c_src/xtea_nif.d
-.rebar
+_build
+rebar.lock

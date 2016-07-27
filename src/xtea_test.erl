@@ -13,7 +13,7 @@
 %%%-------------------------------------------------------------------
 -module(xtea_test).
 
--include("xtea.hrl").
+-include_lib("xtea/include/xtea.hrl").
 
 -export([start/0, start/2, start/3]).
 -export([c_test_async/2, c_test_sync/3,
@@ -22,13 +22,13 @@
          c_test_while/5, erl_test_while/5]).
 
 start() ->
-    start(500, 100).
+    start(10000, 100).
 
 start(Num, Bytes) ->
     start(Num, Bytes, 5).
 
 start(Num, Bytes, Seconds) ->
-    io:format("Init xtea ~p\n",  [catch xtea:init()]),
+    io:format("Init xtea\n",  []),
 
     io:format("Starting test.\nGenerating key and message.\n", []),
     Key = xtea:generate_key(),
@@ -54,7 +54,7 @@ start(Num, Bytes, Seconds) ->
     io:format("~p seconds\n", [ErlTime2/1000000]),
 
     Time = Seconds* 1000,
-    io:format("Testing C encrypt/decrypt for ~p seconds\t", [Time div 1000]),
+    io:format("Testing C encrypt/decrypt for ~p seconds\t\t", [Time div 1000]),
     CTests = c_test_while(Key, Msg, Time),
     io:format("~p tests\n", [CTests]),
     io:format("Testing Erlang encrypt/decrypt for ~p seconds \t", [Time div 1000]),
@@ -137,8 +137,8 @@ rec(0) ->
 c_test_async(Key, Msg) ->
     receive
         {From, start} ->
-            Encrypted = xtea:encrypt(Key, Msg),
-            Decrypted = xtea:decrypt(Key, Encrypted),
+            Encrypted = xtea:c_encrypt(Key, Msg),
+            Decrypted = xtea:c_decrypt(Key, Encrypted),
             if Decrypted =/= Msg ->
                     io:format("Msg: ~p\nEncrypted: ~p\nDecrypted: ~p\n", [Msg, Encrypted, Decrypted]),
                     throw(do_not_match_c);

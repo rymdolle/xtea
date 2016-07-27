@@ -19,14 +19,14 @@
 -export([fill_padding_bytes/1]).
 -export([init/0, generate_key/0]).
 
--include("xtea.hrl").
+-include_lib("xtea/include/xtea.hrl").
 
 -define(SUM, 16#C6EF3720).
 -define(DELTA, 16#61C88647).
 
--on_load(init/0).
-
 -compile({inline,[fit/1]}).
+
+-on_load(init/0).
 
 generate_key() ->
     #key{k1 = rand:uniform(4294967295),
