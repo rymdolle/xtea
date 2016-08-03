@@ -116,9 +116,7 @@ do_encrypt(_Key, _, V0,V1, 32) ->
 
 %% This function is needed due to Erlang's handeling of bignums
 fit(Int) ->
-    <<Int2:32/?UINT>> =
-        <<Int:32/?UINT>>,
-    Int2.
+    Int band 16#FFFFFFFF.
 
 %% Fill up with padding bytes to be able to encrypt the message properly
 fill_padding_bytes(Msg) when byte_size(Msg) rem 8 =/= 0 ->
