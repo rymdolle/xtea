@@ -6,5 +6,10 @@
   {applications, [kernel,
                   stdlib
                  ]},
-  {modules, []}
+  {modules, []},
+
+  {maintainers, ["Olle Mattsson"]},
+  {licenses, ["Apache"]},
+  {links, [{"Github", "https://github.com/rymdolle/xtea"}]}
+
  ]}.
