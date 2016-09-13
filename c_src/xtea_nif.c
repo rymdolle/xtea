@@ -35,11 +35,10 @@ static ERL_NIF_TERM xtea_encrypt(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
      !enif_get_uint(env, tuple[4], &k4)) {
     return enif_make_badarg(env);
   }
-  
-  
+
   ErlNifBinary in, out;
-  
-  if (!enif_inspect_binary(env, argv[1], &in)) 
+
+  if (!enif_inspect_binary(env, argv[1], &in))
     return enif_make_badarg(env);
 
   int size = in.size;
@@ -57,7 +56,7 @@ static ERL_NIF_TERM xtea_encrypt(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
   memcpy(out.data, in.data, in.size);
   uint32_t key[4];
   key[0] = k1; key[1] = k2; key[2] = k3; key[3] = k4;
-  
+
   encrypt((uint32_t*)out.data, key, size);
   return enif_make_binary(env, &out);
 }
@@ -78,10 +77,10 @@ static ERL_NIF_TERM xtea_decrypt(ErlNifEnv* env, int argc, const ERL_NIF_TERM ar
      !enif_get_uint(env, tuple[4], &k4)) {
     return enif_make_badarg(env);
   }
-  
+
   ErlNifBinary bin;
-  
-  if (!enif_inspect_binary(env, argv[1], &bin)) 
+
+  if (!enif_inspect_binary(env, argv[1], &bin))
     return enif_make_badarg(env);
 
   if(bin.size % 8 != 0){
@@ -105,7 +104,6 @@ static ErlNifFunc nif_funcs[] =
 ERL_NIF_INIT(xtea,nif_funcs,NULL,NULL,NULL,NULL)
 
 
-
 void encrypt(uint32_t* buffer, uint32_t key[], int size)
 {
   int read_pos = 0;
@@ -125,7 +123,6 @@ void encrypt(uint32_t* buffer, uint32_t key[], int size)
 
 }
 
-
 void decrypt(uint32_t* buffer, uint32_t key[], int size)
 {
   int read_pos = 0;
@@ -138,7 +135,7 @@ void decrypt(uint32_t* buffer, uint32_t key[], int size)
       v1 -= ((v0 << 4 ^ v0 >> 5) + v0) ^ (sum + key[sum>>11 & 3]);
       sum += DELTA;
       v0 -= ((v1 << 4 ^ v1 >> 5) + v1) ^ (sum + key[sum & 3]);
-    }    
+    }
     buffer[read_pos] = v0; buffer[read_pos + 1] = v1;
     read_pos = read_pos + 2;
   }
