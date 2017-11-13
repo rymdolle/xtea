@@ -16,14 +16,16 @@
 {application, xtea,
  [
   {description, "XTEA encryption written in erlang with NIFs"},
-  {vsn, "0.1.1"},
+  {vsn, "0.1.2"},
   {registered, []},
   {applications, [kernel,
                   stdlib
                  ]},
   {modules, []},
 
-  {maintainers, ["Olle Mattsson <olle@rymdis.com>"]},
+  {maintainers, ["Olle Mattsson"]},
   {licenses, ["Apache License 2.0"]},
-  {links, [{"Github", "https://github.com/rymdolle/xtea"}]}
+  {links, [{"Github", "https://github.com/rymdolle/xtea"}]},
+  {exclude_files, ["priv/*.so",
+                   "c_src/*.o"]}
  ]}.

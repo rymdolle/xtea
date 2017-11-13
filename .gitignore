@@ -6,3 +6,4 @@
 c_src/xtea_nif.d
 _build
 rebar.lock
+.edts
